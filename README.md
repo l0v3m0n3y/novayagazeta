@@ -7,7 +7,7 @@ import novayagazeta
 let client = Novayagazeta()
 
 do {
-    let news = try await client.get_slugs_list(slugs: ["2026/04/24/daleko-idushchie-vyvody-nalichnykh"])
+    let slugs = try await client.get_slugs_list(slugs: ["2026/04/24/daleko-idushchie-vyvody-nalichnykh"])
     print(slugs)
 } catch {
     print("Error: \(error)")
