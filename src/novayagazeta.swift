@@ -109,7 +109,7 @@ public class Novayagazeta{
     }
 
     public func get_slugs_list(eu:Bool = true,slugs: [String]) async throws -> Any {
-        let urlString = "\(eu ? api_eu : api)/get/record?slug=\(slug)"
+        let urlString = "\(eu ? api_eu : api)/get/records"
         guard let url = URL(string: urlString) else {
             throw NSError(domain: "Invalid URL", code: -1)
         }
