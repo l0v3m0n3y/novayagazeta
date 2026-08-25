@@ -35,94 +35,70 @@ public class Novayagazeta{
         ]
 
     }
-    
-    public func get_network_info(eu:Bool = true) async throws -> Any {
-        let urlString = "\(eu ? api_eu : api)/get/network"
-        guard let url = URL(string: urlString) else {
+
+
+    private func fetchJSON(from urlString: String,method: HTTPMethod = .get,body: Data? = nil,queryParameters: [String: String]? = nil) async throws -> Any {
+        var urlComponents = URLComponents(string: urlString)
+        if let queryParameters = queryParameters {
+            urlComponents?.queryItems = queryParameters.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+        guard let url = urlComponents?.url else {
             throw NSError(domain: "Invalid URL", code: -1)
         }
         var request = URLRequest(url: url)
-        request.httpMethod = "GET"
+        request.httpMethod = method.rawValue
         request.allHTTPHeaderFields = headers
+        if let body = body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         let (data, _) = try await URLSession.shared.data(for: request)
         return try JSONSerialization.jsonObject(with: data)
     }
     
-    public func get_themes_list(eu:Bool = true) async throws -> Any {
-        let urlString = "\(eu ? api_eu : api)/get/themes"
-        guard let url = URL(string: urlString) else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+    public func getNetworkInfo(eu:Bool = true) async throws -> Any {
+        return try await fetchJSON(from: "\(eu ? api_eu : api)/get/network")
     }
     
-    public func get_main_page(eu:Bool = true) async throws -> Any {
-        let urlString = "\(eu ? api_eu : api)/get/network"
-        guard let url = URL(string: urlString) else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+    public func getThemesList(eu:Bool = true) async throws -> Any {
+        return try await fetchJSON(from: "\(eu ? api_eu : api)/get/themes")
+    }
+    
+    public func getMainPage(eu:Bool = true) async throws -> Any {
+        return try await fetchJSON(from: "\(eu ? api_eu : api)/get/network")
     }
     
     public func search(eu:Bool = true,q: String,from: Int? = nil,to: Int? = nil,page: Int=0) async throws -> Any {
-        var components = URLComponents(string: "\(eu ? api_eu : api)/search")
-        var queryItems = [
-        URLQueryItem(name: "q", value: q),
-        URLQueryItem(name: "typeList", value: "authors,records"),
-        URLQueryItem(name: "page", value: String(page))
-        ]
+        let urlString = "\(eu ? api_eu : api)/search"
+        var queryParameters: [String: String] = [
+        "q": q,
+        "typeList": "authors,records",
+        "page": String(page)
+        ]|
+        
         if let from = from {
-            queryItems.append(URLQueryItem(name: "from", value: String(from)))
+            queryItems["from"] = String(from)
         }
+        
         if let to = to {
-            queryItems.append(URLQueryItem(name: "to", value: String(to)))
+            queryItems["to"] = String(to)
         }
-        components?.queryItems = queryItems
-        guard let url = components?.url else {
-            throw URLError(.badURL)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+
+        return try await fetchJSON(from: urlString,method: .get,queryParameters: queryParameters)
     }
     
-    public func get_news_by_slug(eu:Bool = true,slug: String) async throws -> Any {
-        let urlString = "\(eu ? api_eu : api)/get/record?slug=\(slug)"
-        guard let url = URL(string: urlString) else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.allHTTPHeaderFields = headers
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONSerialization.jsonObject(with: data)
+    public func getNewsBySlug(eu:Bool = true,slug: String) async throws -> Any {
+        return try await fetchJSON(from: "\(eu ? api_eu : api)/get/record?slug=\(slug)")
     }
 
-    public func get_slugs_list(eu:Bool = true,slugs: [String]) async throws -> Any {
+    public func getSlugsList(eu:Bool = true,slugs: [String]) async throws -> Any {
         let urlString = "\(eu ? api_eu : api)/get/records"
-        guard let url = URL(string: urlString) else {
-            throw NSError(domain: "Invalid URL", code: -1)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.allHTTPHeaderFields = headers
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body: [String: Any] = ["slugs": slugs]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
         
-        let (responseData, _) = try await URLSession.shared.data(for: request)
-        let json = try JSONSerialization.jsonObject(with: responseData)
-        return json
+        let body: [String: Any] = ["slugs": slugs]
+        
+        let bodyData = try JSONSerialization.data(withJSONObject: body, options: [])
+        
+        return try await fetchJSON(from: urlString,method: .post,body: bodyData,queryParameters: nil)
     }
 
 }
