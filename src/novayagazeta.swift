@@ -29,7 +29,6 @@ public enum HTTPMethod: String {
 }
 
 public class Novayagazeta{
-    private let api_eu = "https://novayagazeta.eu/api/v1"
     private let api = "https://novayagazeta.ru/api/v1"
     private var headers: [String: String]
     
@@ -64,20 +63,20 @@ public class Novayagazeta{
         return try JSONSerialization.jsonObject(with: data)
     }
     
-    public func getNetworkInfo(eu:Bool = true) async throws -> Any {
+    public func getNetworkInfo() async throws -> Any {
+        return try await fetchJSON(from: "\(api)/get/network")
+    }
+    
+    public func getThemesList() async throws -> Any {
+        return try await fetchJSON(from: "\(api)/get/themes")
+    }
+    
+    public func getMainPage() async throws -> Any {
         return try await fetchJSON(from: "\(eu ? api_eu : api)/get/network")
     }
     
-    public func getThemesList(eu:Bool = true) async throws -> Any {
-        return try await fetchJSON(from: "\(eu ? api_eu : api)/get/themes")
-    }
-    
-    public func getMainPage(eu:Bool = true) async throws -> Any {
-        return try await fetchJSON(from: "\(eu ? api_eu : api)/get/network")
-    }
-    
-    public func search(eu:Bool = true,q: String,from: Int? = nil,to: Int? = nil,page: Int=0) async throws -> Any {
-        let urlString = "\(eu ? api_eu : api)/search"
+    public func search(q: String,from: Int? = nil,to: Int? = nil,page: Int=0) async throws -> Any {
+        let urlString = "\(api)/search"
         var queryParameters: [String: String] = [
         "q": q,
         "typeList": "authors,records",
@@ -95,12 +94,12 @@ public class Novayagazeta{
         return try await fetchJSON(from: urlString,method: .get,queryParameters: queryParameters)
     }
     
-    public func getNewsBySlug(eu:Bool = true,slug: String) async throws -> Any {
-        return try await fetchJSON(from: "\(eu ? api_eu : api)/get/record?slug=\(slug)")
+    public func getNewsBySlug(slug: String) async throws -> Any {
+        return try await fetchJSON(from: "\(api)/get/record?slug=\(slug)")
     }
 
-    public func getSlugsList(eu:Bool = true,slugs: [String]) async throws -> Any {
-        let urlString = "\(eu ? api_eu : api)/get/records"
+    public func getSlugsList(slugs: [String]) async throws -> Any {
+        let urlString = "\(api)/get/records"
         
         let body: [String: Any] = ["slugs": slugs]
         
